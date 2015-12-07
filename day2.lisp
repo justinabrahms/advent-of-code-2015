@@ -1021,12 +1021,6 @@
                (split-sequence:split-sequence #\  input-str))))
 
 
-(define-test actual-answer
-  (assert-equal 1586300 
-                (big-input #'wrapping-calc *input-str*)))
-
-
-
 (defun ribbon-length (length width height)
   (let ((smallest-permimeter
           (* 2 (reduce #'+ (smallest-side length width height))))
@@ -1037,6 +1031,5 @@
 
 (define-test ribbon-length-tests
   (assert-equal 34 (ribbon-length 2 3 4))
-  (assert-equal 14 (ribbon-length 1 1 10))
-  (assert-equal 3737498 (big-input #'ribbon-length *input-str*)))
+  (assert-equal 14 (ribbon-length 1 1 10)))
 
