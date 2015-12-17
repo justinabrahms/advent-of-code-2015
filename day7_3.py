@@ -94,7 +94,7 @@ class DoItTests(unittest.TestCase):
     def test_while_loop(self):
         result = {}
         while 'h' not in result:
-            result, _ = do_it(result, start)
+            result = do_it(result, start)
             
         self.assertEqual(result['h'], 65412)
 
@@ -103,7 +103,7 @@ class DoItTests(unittest.TestCase):
         total = 0
         while len(result.keys()) < 8:
             total += 1
-            result, _ = do_it(result, start)
+            result = do_it(result, start)
             if total == 1000:
                 break
 
