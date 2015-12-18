@@ -72,6 +72,8 @@ def do_it(done, todo):
             oper, num = unary_result.groups()
             if num in done or flat_number.match(num):
                 done[wire] = UNARY_MAPPING[oper](int(done.get(num, num))) & mask
+        else:
+            raise AttributeError("WTF? %s" % instruction)    
     return done
 
 class DoItTests(unittest.TestCase):
@@ -98,16 +100,26 @@ class DoItTests(unittest.TestCase):
             
         self.assertEqual(result['h'], 65412)
 
+    def test_letter(self):
+        result = {}
+        while 'y' not in result:
+            result = do_it(result, "x -> y\n9 -> x")
+        self.assertEqual(result['y'], 9)
+
+    def test_broken(self):
+        self.assertRaises(AttributeError, lambda: do_it({}, "zargob felmeth -> x"))
+
+    def test_missing_unary(self):
+        instruction = "NOT x -> h\n123 -> x"
+        result = do_it(do_it({}, instruction), instruction)
+        self.assertEqual(result['h'], 65412)
+
     def test_example(self):
         result = {}
         total = 0
         while len(result.keys()) < 8:
             total += 1
             result = do_it(result, start)
-            if total == 1000:
-                break
-
-        print result
 
         self.assertEqual(result['d'], 72)
         self.assertEqual(result['e'], 507)
