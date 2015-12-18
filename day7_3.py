@@ -133,15 +133,9 @@ class DoItTests(unittest.TestCase):
 
 
 if __name__ == '__main__':  # pragma: no cover
-    a, c = {}, open('day7.txt').read()
+    result = {}
+    instructions = open('day7.txt').read()
     loops = 0
-    while 'a' not in a:
-        a = do_it(a, c)
-        loops += 1
-        if loops % 1000 == 0:
-            print loops
-            pprint(a)
-            print c
-            if loops == 3000:  # infinite loop catch
-                break
-    print 'FINAL ANSWER: %s' % a['a']
+    while 'a' not in result:
+        result = do_it(result, instructions)
+    print 'FINAL ANSWER: %s' % result['a']
