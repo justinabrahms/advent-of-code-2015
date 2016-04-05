@@ -1,3 +1,6 @@
+"""
+Skipping the old version. Doing it in a new version.
+"""
 from unittest import TestCase, skip
 import re
 import operator
@@ -29,6 +32,12 @@ result = end
 
 instruction_parser = re.compile('(?P<commands>.*) -> (?P<wire>\w+)$')
 
+def maybe(x):
+    if callable(x):
+        return x()
+    return x
+        
+
 def parse_instruction(instruction):
     found = instruction_parser.search(instruction)
     if found:
@@ -45,7 +54,6 @@ UNARY_MAPPING = {
     'NOT': operator.inv
 }
 
-
 def instruction_to_result(state, instruction, wire):
     mask = 2 ** 16 - 1
     flat_number = re.search('^(?P<number>\d+)', instruction)
@@ -54,19 +62,24 @@ def instruction_to_result(state, instruction, wire):
     if flat_number:
         num = int(flat_number.groupdict()['number'])
         log.debug("FLAT NUMBER: {} {}".format(wire, num))
-        state[wire] = num
+        state[wire] = lambda: int(num)
     elif binary_re:
         first, bitwise, second = binary_re.groups()
-        first = state.get(first, first)
-        second = state.get(second, second)
+        if re.match('^\d+$', first):
+            first = lambda: int(first)
+        
+        if re.match('^\d+$', second):
+            second = lambda: int(second)
+
         fn = BINARY_MAPPING[bitwise]
-        log.debug("Mapping {} via {} {} {}".format(wire, first, bitwise, second))
-        state[wire] = fn(int(first), int(second)) & mask
+        # log.debug("Mapping {} via {} {} {}".format(wire, first, bitwise, second))
+        state[wire] = lambda: fn(eval("{}()".format(first), state), 
+                                 eval("{}()".format(second), state)) & mask
     elif unary_re:
         parsed = unary_re.groupdict()
         first = parsed['first']
-        log.debug("UNARY: {} via {} {} (val: {})".format(wire, parsed['unary'], first, int(state.get(first, first)) & mask))
-        state[wire] = UNARY_MAPPING[parsed['unary']](int(state.get(first, first))) & mask
+        # log.debug("UNARY: {} via {} {} (val: {})".format(wire, parsed['unary'], first, int(state.get(first, first)) & mask))
+        state[wire] = lambda: UNARY_MAPPING[parsed['unary']](eval("{}()".format(first), state)) & mask
     else:
         raise NotImplemented()
     return state
@@ -79,22 +92,28 @@ def main(instructions):
     keys = sorted(state.keys())
     result = ""
     for k in keys:
-        result += "{}: {}\n".format(k, state[k])
+        print("keys: {}".format(state.keys()))
+        print("k: {}".format(k))
+        print("k is 'f'? {}".format(k == 'f'))
+        print("contained? {}".format(k in state))
+        if k == 'f':
+            print("STATE! {}".format(state['f']))
+        result += "{}: {}\n".format(k, maybe(state[k]))
     return result
 
 class InstructionTest(TestCase):
     def test_run_wire_value(self):
         state = instruction_to_result({}, '1234', 'x')
-        self.assertEqual(state['x'], 1234)
+        self.assertEqual(state['x'](), 1234)
         
     def test_run_and(self):
         "bitwise and test"
-        state = instruction_to_result({'x': 3, 'y': 5}, 'x AND y', 'z')
-        self.assertEqual(state['z'], 1)
-
+        state = instruction_to_result({'x': lambda: 3, 'y': lambda: 5}, 'x AND y', 'z')
+        self.assertEqual(state['z'](), 1)
+        
     def test_run_not(self):
-        state = instruction_to_result({'x': 123}, 'NOT x', 'y')
-        self.assertEqual(state['y'], 65412)
+        state = instruction_to_result({'x': lambda: 123}, 'NOT x', 'y')
+        self.assertEqual(state['y'](), 65412)
     
     def test_parses_wire_from_stream(self):
         _, wire = parse_instruction(instructions[0])

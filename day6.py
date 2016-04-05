@@ -88,3 +88,10 @@ y = light_show([
     'toggle 0,0 through 999,999'
 ], do_instruction__updated, start_state=defaultdict(int))
 
+
+with open('../../totallygloria/PythonProblems/AdventOfCode.06.data.py', 'r') as f:
+        lines = f.readlines()
+
+print sum(light_show(lines, do_instruction).values())
+
+        
